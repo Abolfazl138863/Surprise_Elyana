@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0d0d">
+<title>روزت مبارک الیانا</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0d0d; --red:#e63946; --gold:#e9c46a;
+  --text:#f1ece4; --muted:#b9b1a6;
+  --glass:rgba(255,255,255,.055); --edge:rgba(233,196,106,.28);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:"Vazirmatn",Tahoma,sans-serif; line-height:2;
+  min-height:100vh; overflow-x:hidden;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+body::before{ /* soft glow behind everything */
+  content:""; position:fixed; inset:0; z-index:-1;
+  background:
+    radial-gradient(60% 40% at 50% 0%, rgba(230,57,70,.16), transparent 70%),
+    radial-gradient(50% 35% at 50% 100%, rgba(233,196,106,.08), transparent 70%);
+}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+main{position:relative;z-index:1}
+section{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:72px 20px;text-align:center}
+
+/* secrets stay hidden until the open button is tapped */
+#messages,#final{display:none}
+body.opened #messages,body.opened #final{display:flex}
+
+/* hero */
+h1{
+  font-weight:800; color:var(--gold);
+  font-size:clamp(2.2rem,9vw,4.6rem); line-height:1.4;
+  text-shadow:0 0 28px rgba(233,196,106,.35);
+}
+.typing{
+  margin-top:28px; max-width:30ch; min-height:6.5em;
+  font-size:clamp(1.05rem,4.2vw,1.45rem); font-weight:300; color:var(--text);
+}
+.caret{display:inline-block;width:2px;height:1.1em;background:var(--red);vertical-align:middle;margin-inline-start:4px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+.btn{
+  margin-top:34px; cursor:pointer; font-family:inherit;
+  font-size:1.1rem; font-weight:600; color:var(--bg);
+  background:linear-gradient(135deg,var(--gold),#f4dd9b);
+  border:0; border-radius:999px; padding:14px 34px;
+  box-shadow:0 0 0 0 rgba(233,196,106,.5);
+  animation:pulse 2.6s infinite; transition:transform .2s;
+}
+.btn:active{transform:scale(.96)}
+.btn:focus-visible,.close:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+.btn.red{color:#fff;background:linear-gradient(135deg,var(--red),#a4202c);animation-name:pulseRed}
+@keyframes pulse{70%{box-shadow:0 0 0 18px rgba(233,196,106,0)}100%{box-shadow:0 0 0 0 rgba(233,196,106,0)}}
+@keyframes pulseRed{0%{box-shadow:0 0 0 0 rgba(230,57,70,.55)}70%{box-shadow:0 0 0 18px rgba(230,57,70,0)}100%{box-shadow:0 0 0 0 rgba(230,57,70,0)}}
+
+/* cards */
+.cards{display:flex;flex-direction:column;gap:22px;width:100%;max-width:560px}
+.card{
+  position:relative; cursor:pointer; text-align:right;
+  background:var(--glass); border:1px solid var(--edge); border-radius:22px;
+  padding:26px 24px; font-size:1.12rem;
+  -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+  box-shadow:0 14px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08);
+  opacity:0; transform:translateY(40px);
+  transition:opacity .9s ease, transform .9s ease, border-color .3s;
+}
+.card.in{opacity:1;transform:none}
+.card:nth-child(2){transition-delay:.15s}
+.card:nth-child(3){transition-delay:.3s}
+.card::after{content:"❤";position:absolute;top:12px;left:16px;color:var(--red);font-size:.9rem;opacity:.8}
+.card:active{border-color:var(--red)}
+.card .gold{color:var(--gold);font-weight:600}
+
+/* modal */
+.overlay{
+  position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:rgba(0,0,0,.7);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s;
+}
+.overlay.open{opacity:1;visibility:visible}
+.modal{
+  position:relative;max-width:420px;width:100%;text-align:center;
+  background:rgba(20,20,20,.85);border:1px solid var(--red);border-radius:26px;padding:42px 26px 34px;
+  box-shadow:0 0 60px rgba(230,57,70,.3);
+  transform:scale(.85) translateY(20px);transition:transform .45s cubic-bezier(.2,1.3,.4,1);
+  font-size:1.2rem;
+}
+.overlay.open .modal{transform:none}
+.modal .em{font-size:2.4rem;display:block;margin-bottom:10px}
+.close{position:absolute;top:10px;left:14px;background:none;border:0;color:var(--muted);font-size:1.8rem;cursor:pointer;padding:6px 12px}
+
+.music{
+  position:fixed;z-index:9;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));
+  width:52px;height:52px;border-radius:50%;cursor:pointer;font-size:1.4rem;color:var(--gold);
+  background:var(--glass);border:1px solid var(--edge);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+}
+.music.on{border-color:var(--red);box-shadow:0 0 18px rgba(230,57,70,.5);animation:pulseRed 2.6s infinite}
+.music:focus-visible{outline:2px solid var(--red);outline-offset:3px}
+
+footer{position:relative;z-index:1;text-align:center;color:var(--muted);font-size:.85rem;padding:0 0 40px}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.01ms!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+
+<main>
+  <section id="hero">
+    <h1>روزت مبارک الیانا ✨</h1>
+    <p class="typing" id="typing" aria-live="polite"><span id="typed"></span><span class="caret"></span></p>
+    <button class="btn" id="openBtn">باز کردن راز 💌</button>
+  </section>
+
+  <section id="messages">
+    <div class="cards">
+      <div class="card">روز جهانی دختر مبارک <span class="gold">الیانای عزیز</span> حواسم بهت هست حتی وقتایی که فکر می‌کنی حواسم نیست</div>
+      <div class="card">یادت نره خوب استراحت کنی قرصاتو سر وقت بخوری و زیاد به حرفام فکر نکنی...😂</div>
+      <div class="card">یه چیزی تو حرف زدنت هست که <span class="gold">هنوزم دارم بهش فکر می‌کنم</span> فقط خواستم بدونی</div>
+      <div class="card">متنش دلی بود ببخشید اگه یجاهایی حس کردی کلیشه ایه</div>
+      <div> 
+  </section>
+
+  <section id="final">
+    <button class="btn red" id="secretBtn">رازِ آخر 🔒</button>
+  </section>
+</main>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="mtext">
+  <div class="modal">
+    <button class="close" id="closeBtn" aria-label="بستن">×</button>
+    <span class="em">😉</span>
+    <p id="mtext">فکر کردی قرار بود همین‌جا همه‌چیز رو لو بدم باقیش باشه واسه بعد</p>
+  </div>
+</div>
+
+<audio id="song" src="music.mp3" loop preload="auto"></audio>
+<button class="music" id="musicBtn" aria-label="پخش یا توقف موسیقی">🎵</button>
+
+<footer>برای الیانا ❤</footer>
+
+<script>
+/* ---------- floating glowing hearts ---------- */
+const cv = document.getElementById('bg'), ctx = cv.getContext('2d');
+let W, H, DPR, hearts = [];
+const COLORS = ['230,57,70','233,196,106'];
+
+function resize(){
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = cv.width = innerWidth * DPR;
+  H = cv.height = innerHeight * DPR;
+  const n = Math.round(Math.min(46, innerWidth / 14));
+  hearts = Array.from({length:n}, () => spawn(true));
+}
+function spawn(anywhere){
+  return {
+    x: Math.random()*W,
+    y: anywhere ? Math.random()*H : H + 30*DPR,
+    s: (6 + Math.random()*16) * DPR,
+    v: (.15 + Math.random()*.5) * DPR,
+    d: Math.random()*Math.PI*2,
+    a: .15 + Math.random()*.45,
+    c: COLORS[Math.random() < .75 ? 0 : 1]
+  };
+}
+function heart(x, y, s){
+  ctx.beginPath();
+  ctx.moveTo(x, y + s*.3);
+  ctx.bezierCurveTo(x, y - s*.3, x - s, y - s*.3, x - s, y + s*.3);
+  ctx.bezierCurveTo(x - s, y + s*.8, x, y + s*1.1, x, y + s*1.4);
+  ctx.bezierCurveTo(x, y + s*1.1, x + s, y + s*.8, x + s, y + s*.3);
+  ctx.bezierCurveTo(x + s, y - s*.3, x, y - s*.3, x, y + s*.3);
+  ctx.closePath();
+}
+function frame(t){
+  ctx.clearRect(0,0,W,H);
+  for (const h of hearts){
+    h.y -= h.v; h.d += .01;
+    const x = h.x + Math.sin(h.d + t/1800) * 18 * DPR;
+    ctx.save();
+    ctx.shadowColor = `rgba(${h.c},.9)`; ctx.shadowBlur = 16 * DPR;
+    ctx.fillStyle = `rgba(${h.c},${h.a})`;
+    heart(x, h.y, h.s/2); ctx.fill();
+    ctx.restore();
+    if (h.y < -40*DPR) Object.assign(h, spawn(false));
+  }
+  requestAnimationFrame(frame);
+}
+addEventListener('resize', resize);
+resize(); requestAnimationFrame(frame);
+
+/* burst of hearts on a tap */
+function burst(px, py){
+  for (let i = 0; i < 9; i++){
+    const h = spawn(false);
+    h.x = px*DPR + (Math.random()-.5)*60*DPR;
+    h.y = py*DPR; h.v *= 3; h.a = .8; h.c = COLORS[0];
+    hearts.push(h);
+  }
+  if (hearts.length > 140) hearts.splice(0, hearts.length - 140);
+}
+
+/* ---------- typewriter ---------- */
+const line = "بعضی حرفا رو نمی‌شه تو چت گفت... بعضی رازها باید تو یه جای امن‌تر بمونن";
+const typed = document.getElementById('typed');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (reduce) typed.textContent = line;
+else {
+  let i = 0;
+  setTimeout(function tick(){
+    typed.textContent = line.slice(0, ++i);
+    if (i < line.length) setTimeout(tick, 55 + Math.random()*45);
+  }, 900);
+}
+
+/* ---------- music: music.mp3 if present, otherwise a soft built-in melody ---------- */
+const song = document.getElementById('song'), mbtn = document.getElementById('musicBtn');
+let want = false, fileOk = true, ac = null, timer = null, step = 0, nextT = 0, delayIn = null;
+const CH = [ // bass, then four chord tones: Am, F, C, G
+  [110,220,261.63,329.63,440],
+  [87.31,174.61,220,261.63,349.23],
+  [130.81,261.63,329.63,392,523.25],
+  [98,196,246.94,293.66,392]
+];
+const PAT = [1,2,3,4,3,2,3,2], EIGHTH = 60/72/2;
+
+function tone(f, t, dur, vol, type){
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + .03);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(delayIn); g.connect(ac.destination);
+  o.start(t); o.stop(t + dur + .05);
+}
+function sched(){
+  while (nextT < ac.currentTime + .3){
+    const ch = CH[Math.floor(step / 8) % 4], k = step % 8;
+    tone(ch[PAT[k]], nextT, 1.4, .11, 'triangle');
+    if (k === 0) tone(ch[0], nextT, 2.8, .16, 'sine');
+    if (k === 0 || k === 4) tone(ch[2 + Math.floor(Math.random()*3)] * 2, nextT, 1.8, .05, 'sine');
+    step++; nextT += EIGHTH;
+  }
+}
+function startSynth(){
+  if (timer) return;
+  ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+  if (!delayIn){ // soft echo
+    delayIn = ac.createGain();
+    const d = ac.createDelay(1), fb = ac.createGain(), wet = ac.createGain();
+    d.delayTime.value = .36; fb.gain.value = .38; wet.gain.value = .35;
+    delayIn.connect(d); d.connect(fb); fb.connect(d); d.connect(wet); wet.connect(ac.destination);
+  }
+  ac.resume(); nextT = ac.currentTime + .1;
+  timer = setInterval(sched, 100);
+}
+function stopSynth(){ if (timer){ clearInterval(timer); timer = null; if (ac) ac.suspend(); } }
+function ui(){ mbtn.classList.toggle('on', want); mbtn.textContent = want ? '🎵' : '🔇'; }
+function playMusic(){
+  want = true; ui();
+  if (fileOk) song.play().catch(() => { fileOk = false; if (want) startSynth(); });
+  else startSynth();
+}
+function pauseMusic(){ want = false; ui(); song.pause(); stopSynth(); }
+song.addEventListener('error', () => { fileOk = false; if (want) startSynth(); });
+mbtn.addEventListener('click', () => want ? pauseMusic() : playMusic());
+
+/* ---------- scroll + reveal ---------- */
+document.getElementById('openBtn').addEventListener('click', () => {
+  if (!want) playMusic(); // browsers only allow sound after a tap
+  document.body.classList.add('opened');
+  document.getElementById('messages').scrollIntoView({behavior: reduce ? 'auto' : 'smooth'});
+});
+
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+}), {threshold: .35});
+document.querySelectorAll('.card').forEach(c => {
+  io.observe(c);
+  c.addEventListener('click', e => burst(e.clientX, e.clientY));
+});
+
+/* ---------- modal ---------- */
+const overlay = document.getElementById('overlay');
+const openM = e => { overlay.classList.add('open'); burst(e.clientX || innerWidth/2, e.clientY || innerHeight/2); document.getElementById('closeBtn').focus(); };
+const closeM = () => overlay.classList.remove('open');
+document.getElementById('secretBtn').addEventListener('click', openM);
+document.getElementById('closeBtn').addEventListener('click', closeM);
+overlay.addEventListener('click', e => { if (e.target === overlay) closeM(); });
+addEventListener('keydown', e => { if (e.key === 'Escape') closeM(); });
+</script>
+</body>
+</html>
