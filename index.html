@@ -7,7 +7,8 @@
 <title>روزت مبارک الیانا</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;800&display=swap"></noscript>
 <style>
 :root{--bg:#0d0d0d;--red:#e63946;--gold:#e9c46a;--text:#f1ece4;--muted:#b9b1a6;--edge:rgba(233,196,106,.28);--ease:cubic-bezier(.22,1,.36,1);--fa:"Vazirmatn","Vazir","Yekan",Tahoma,sans-serif}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -20,7 +21,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-grad
 .aurora i:nth-child(1){top:-25%;right:-25%;background:radial-gradient(circle,rgba(230,57,70,.3),transparent 65%)}
 .aurora i:nth-child(2){bottom:-30%;left:-25%;background:radial-gradient(circle,rgba(233,196,106,.18),transparent 65%);animation-duration:32s;animation-delay:-9s}
 .aurora i:nth-child(3){display:none}
-#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+#bg{position:fixed;top:0;left:0;width:100%;height:100vh;height:100lvh;z-index:0;pointer-events:none}
 main{position:relative;z-index:1}
 section{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:72px 20px;text-align:center}
 #messages,#final{display:none}
@@ -57,7 +58,13 @@ h1{font-weight:800;color:var(--gold);font-size:clamp(2.2rem,9vw,4.6rem);line-hei
 .card::after{content:"❤";position:absolute;top:12px;left:16px;color:var(--red);font-size:.9rem;opacity:.85;animation:heart 2.4s ease-in-out infinite}
 .card .gold{color:var(--gold);font-weight:600}
 .card .w{display:inline-block;opacity:0;transform:translateY(10px)}
-.card.in .w{opacity:1;transform:none;transition:opacity .7s ease,transform .7s var(--ease);transition-delay:calc(.3s + var(--i)*60ms)}
+.card.in .w{opacity:1;transform:none;transition:opacity .6s ease,transform .6s var(--ease);transition-delay:calc(.3s + var(--i)*45ms)}
+.card{contain:layout paint;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+body::before{transform:translateZ(0)}
+/* adaptive quality: the engine reports its level, CSS sheds decoration when the phone struggles */
+body[data-q="2"] .aurora i,body[data-q="3"] .aurora i{animation-play-state:paused}
+body[data-q="3"] .aurora{display:none}
+body[data-q="3"] .btn::after,body[data-q="3"] .card::after{animation:none}
 
 .overlay{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.84);opacity:0;visibility:hidden;transition:opacity .4s var(--ease),visibility .4s}
 .overlay.open{opacity:1;visibility:visible}
@@ -86,7 +93,7 @@ footer{position:relative;z-index:1;text-align:center;color:var(--muted);font-siz
 
 @keyframes blink{50%{opacity:0}}
 @keyframes rise{from{opacity:0;transform:translateY(22px)}}
-@keyframes drift{to{transform:translate3d(6vmax,-5vmax,0) scale(1.15)}}
+@keyframes drift{to{transform:translate3d(6vmax,-5vmax,0)}}
 @keyframes sweep{55%,100%{transform:translateX(120%)}}
 @keyframes beat{0%,100%{scale:1}14%{scale:1.07}28%{scale:1}42%{scale:1.05}}
 @keyframes shake{0%,100%{rotate:0deg}20%{rotate:-7deg}40%{rotate:6deg}60%{rotate:-4deg}80%{rotate:3deg}}
@@ -106,7 +113,7 @@ footer{position:relative;z-index:1;text-align:center;color:var(--muted);font-siz
 <main>
   <section id="hero">
     <h1>روزت مبارک الیانا ✨</h1>
-    <p class="typing" id="typing" aria-live="polite"><span id="typed"></span><span class="caret"></span></p>
+    <p class="typing" id="typing"><span id="typed"></span><span class="caret"></span></p>
     <button class="btn" id="openBtn">باز کردن راز 💌</button>
   </section>
 
@@ -129,94 +136,146 @@ footer{position:relative;z-index:1;text-align:center;color:var(--muted);font-siz
     <button class="close" id="closeBtn" aria-label="بستن">×</button>
     <span class="seal" aria-hidden="true">❤</span>
     <p class="title" id="mtext">فکر کردی قرار بود همین‌جا همه‌چیز رو لو بدم؟ </p>
-    <p class="sub">باقیش بمونه برای بعدا...</p>
+    <p class="sub">باقیش بمونه برای شاید همین امشب شاید هم بعدا...</p>
     <button class="ok" id="okBtn">باشه، منتظر می‌مونم </button>
   </div>
 </div>
 
-<audio id="song" src="music.mp3" loop preload="auto"></audio>
+<audio id="song" src="music.mp3" loop preload="metadata"></audio>
 <button class="music" id="musicBtn" aria-label="پخش یا توقف موسیقی">🎵</button>
 
 <footer>برای الیانا ❤</footer>
 
 <script>
-/* ---------- fast canvas: glow is baked once into sprites, then drawImage ---------- */
-const cv = document.getElementById('bg'), ctx = cv.getContext('2d');
-const lowEnd = (navigator.hardwareConcurrency || 4) <= 4;
-let W, H, DPR, hearts = [], stars = [], parts = [], rings = [], last = 0, running = true, rt;
-const COLORS = ['230,57,70','233,196,106'];
+/* ---------- render engine: runs in a Web Worker on an OffscreenCanvas (main thread stays free) ---------- */
+function engineFactory(emit){
+  const COLORS = ['230,57,70','233,196,106'];
+  const mk = z => typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(z, z) : Object.assign(document.createElement('canvas'), {width:z, height:z});
+  const raf = self.requestAnimationFrame ? f => self.requestAnimationFrame(f) : f => setTimeout(() => f(performance.now()), 16);
+  function sprite(c, isHeart){ // glow baked once
+    const z = 64, o = mk(z), g = o.getContext('2d');
+    g.shadowColor = `rgba(${c},1)`; g.shadowBlur = 12; g.fillStyle = `rgb(${c})`; g.beginPath();
+    if (isHeart){
+      const s = 12, x = z/2, y = z/2 - s*.6;
+      g.moveTo(x, y + s*.3); g.bezierCurveTo(x, y - s*.3, x - s, y - s*.3, x - s, y + s*.3);
+      g.bezierCurveTo(x - s, y + s*.8, x, y + s*1.1, x, y + s*1.4); g.bezierCurveTo(x, y + s*1.1, x + s, y + s*.8, x + s, y + s*.3);
+      g.bezierCurveTo(x + s, y - s*.3, x, y - s*.3, x, y + s*.3);
+    } else g.arc(z/2, z/2, 6, 0, 6.3);
+    g.fill(); return o;
+  }
+  const HS = COLORS.map(c => sprite(c, 1)), DS = COLORS.map(c => sprite(c, 0));
+  let cv, ctx, cw = 1, ch = 1, S = 1, dpr = 1, low = false, reduce = false, run = false, looping = false, alive = false;
+  let last = 0, acc = 0, fc = 0, good = 0, lvl = 0, recovered = false, noRec = false;
+  const LV = [{h:1,p:1,st:1,q:1},{h:1,p:.55,st:0,q:1},{h:.55,p:.3,st:0,q:.85},{h:.3,p:.15,st:0,q:.7}];
+  const MAXP = 220, px = new Float32Array(MAXP), py = new Float32Array(MAXP), pvx = new Float32Array(MAXP), pvy = new Float32Array(MAXP),
+        pl = new Float32Array(MAXP), pd = new Float32Array(MAXP), ps = new Float32Array(MAXP), pk = new Uint8Array(MAXP), A = [px,py,pvx,pvy,pl,pd,ps,pk];
+  let pn = 0, hearts = [], rings = [], stars = [];
 
-function sprite(c, isHeart){
-  const z = 64, o = document.createElement('canvas'); o.width = o.height = z;
-  const g = o.getContext('2d'); g.shadowColor = `rgba(${c},1)`; g.shadowBlur = 12; g.fillStyle = `rgb(${c})`; g.beginPath();
-  if (isHeart){
-    const s = 12, x = z/2, y = z/2 - s*.6;
-    g.moveTo(x, y + s*.3); g.bezierCurveTo(x, y - s*.3, x - s, y - s*.3, x - s, y + s*.3);
-    g.bezierCurveTo(x - s, y + s*.8, x, y + s*1.1, x, y + s*1.4); g.bezierCurveTo(x, y + s*1.1, x + s, y + s*.8, x + s, y + s*.3);
-    g.bezierCurveTo(x + s, y - s*.3, x, y - s*.3, x, y + s*.3);
-  } else g.arc(z/2, z/2, 6, 0, 6.3);
-  g.fill(); return o;
+  function reset(h, any){ // in-place respawn, zero allocation
+    h.x = Math.random()*cv.width; h.y = any ? Math.random()*cv.height : cv.height + 30*S; h.s = (8 + Math.random()*16)*S;
+    h.v = (.15 + Math.random()*.5)*S; h.d = Math.random()*6.28; h.a = .2 + Math.random()*.45; h.c = Math.random() < .75 ? 0 : 1; return h;
+  }
+  function apply(){ // (re)size canvas + population for the current quality level
+    const ow = cv.width || 1, oh = cv.height || 1, oS = S; S = dpr*LV[lvl].q;
+    cv.width = Math.round(cw*S); cv.height = Math.round(ch*S);
+    for (const h of hearts){ h.x *= cv.width/ow; h.y *= cv.height/oh; h.s *= S/oS; h.v *= S/oS; }
+    const want = Math.max(4, Math.round(Math.min(low ? 16 : 26, cw/18)*LV[lvl].h));
+    while (hearts.length < want) hearts.push(reset({}, true));
+    hearts.length = want;
+  }
+  function spark(x, y, n, p){
+    const cap = Math.max(20, Math.round(MAXP*LV[lvl].p*(low ? .6 : 1)));
+    for (let i = 0; i < n; i++){
+      const j = pn < cap ? pn++ : (Math.random()*pn | 0), a = Math.random()*6.283, sp = (1.2 + Math.random()*5)*p*S;
+      px[j] = x*S; py[j] = y*S; pvx[j] = Math.cos(a)*sp; pvy[j] = Math.sin(a)*sp - 2*S; pl[j] = 1;
+      pd[j] = .012 + Math.random()*.014; ps[j] = (3 + Math.random()*6)*S; pk[j] = (Math.random() < .6 ? 0 : 1)*2 + (Math.random() < .55 ? 1 : 0);
+    }
+  }
+  function governor(dt){ // frame-time watchdog: sheds load on slow devices, wins it back once if stable
+    acc += dt; if (++fc < 45) return;
+    const a = acc/fc; acc = fc = 0;
+    if (a > 24 && lvl < 3){ if (recovered) noRec = true; lvl++; good = 0; apply(); emit({t:'lvl', v:lvl}); }
+    else if (a < 18.5 && lvl > 0 && !noRec){ if (++good >= 6){ lvl--; good = 0; recovered = true; apply(); emit({t:'lvl', v:lvl}); } }
+    else if (a >= 18.5) good = 0;
+  }
+  function frame(t){
+    if (!run){ looping = false; return; }
+    raf(frame);
+    const dt = t - last; last = t; if (dt <= 0 || dt > 200) return;
+    const k = Math.min(dt/16.7, 3); governor(dt);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for (const h of hearts){
+      h.y -= h.v*k; h.d += .01*k;
+      const d = h.s*2.667, x = h.x + Math.sin(h.d + t/1800)*18*S;
+      ctx.globalAlpha = h.a; ctx.drawImage(HS[h.c], x - d/2, h.y - d/2, d, d);
+      if (h.y < -40*S) reset(h, false);
+    }
+    for (let i = pn - 1; i >= 0; i--){
+      pvy[i] += .11*S*k; pvx[i] *= .985; px[i] += pvx[i]*k; py[i] += pvy[i]*k; pl[i] -= pd[i]*k;
+      if (pl[i] <= 0){ const L = --pn; if (i !== L) for (const a of A) a[i] = a[L]; continue; }
+      const d = ps[i]*3.2, kk = pk[i]; ctx.globalAlpha = pl[i]; ctx.drawImage((kk & 1 ? HS : DS)[kk >> 1], px[i] - d/2, py[i] - d/2, d, d);
+    }
+    ctx.globalAlpha = 1;
+    for (let i = rings.length - 1; i >= 0; i--){
+      const r = rings[i]; r.r += 6*S*k; r.l -= .028*k;
+      if (r.l <= 0){ rings.splice(i, 1); continue; }
+      ctx.strokeStyle = `rgba(233,196,106,${r.l})`; ctx.lineWidth = 2*S; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, 6.3); ctx.stroke();
+    }
+    if (!reduce && !low && LV[lvl].st && Math.random() < .005) stars.push({x:cv.width*(.2 + Math.random()*.8), y:Math.random()*cv.height*.4, vx:-(7 + Math.random()*4)*S, vy:(3 + Math.random()*2)*S, l:1});
+    for (let i = stars.length - 1; i >= 0; i--){
+      const s = stars[i]; s.x += s.vx*k; s.y += s.vy*k; s.l -= .016*k;
+      if (s.l <= 0){ stars.splice(i, 1); continue; }
+      ctx.strokeStyle = `rgba(255,242,205,${s.l})`; ctx.lineWidth = 1.6*S; ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x - s.vx*7, s.y - s.vy*7); ctx.stroke();
+    }
+    if (!alive){ alive = true; emit({t:'alive'}); }
+  }
+  const go = () => { if (run && !looping){ looping = true; last = 0; raf(frame); } };
+  return function(m){
+    switch (m.t){
+      case 'init': cv = m.canvas; ctx = cv.getContext('2d'); dpr = m.dpr; low = m.low; reduce = m.reduce; cw = m.w; ch = m.h; run = m.run; apply(); go(); break;
+      case 'size': cw = m.w; ch = m.h; apply(); break;
+      case 'spark': spark(m.x, m.y, m.n, m.p); break;
+      case 'burst': spark(m.x, m.y, low ? Math.round(m.n*.7) : m.n, 1); if (LV[lvl].p > .3 && rings.length < 5) rings.push({x:m.x*S, y:m.y*S, r:0, l:1}); break;
+      case 'run': run = m.v; go(); break;
+    }
+  };
 }
-const HS = COLORS.map(c => sprite(c, 1)), DS = COLORS.map(c => sprite(c, 0));
 
-function resize(){
-  DPR = Math.min(devicePixelRatio || 1, lowEnd ? 1 : 1.5);
-  W = cv.width = Math.round(innerWidth * DPR); H = cv.height = Math.round(innerHeight * DPR);
-  const n = Math.round(Math.min(lowEnd ? 16 : 26, innerWidth / 18));
-  hearts = Array.from({length:n}, () => spawn(true));
+/* ---------- main-thread glue (tiny): worker first, automatic fallback to main thread ---------- */
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const low = (navigator.hardwareConcurrency || 4) <= 4;
+let cv = document.getElementById('bg'), eng = null, worker = null, mainMode = false, transferred = false, wd, rt, hmax = 0, wlast = 0;
+const dims = () => { if (innerWidth !== wlast){ wlast = innerWidth; hmax = 0; } hmax = Math.max(hmax, innerHeight); return {w:innerWidth, h:hmax}; };
+const base = () => ({dpr:Math.min(devicePixelRatio || 1, low ? 1 : 1.5), low, reduce, run:!document.hidden, ...dims()});
+const emit = m => { if (m.t === 'lvl') document.body.dataset.q = m.v; else if (m.t === 'alive') clearTimeout(wd); };
+function startMain(){
+  if (mainMode) return; mainMode = true; clearTimeout(wd);
+  try {
+    if (worker){ worker.terminate(); worker = null; }
+    if (transferred){ const c = document.createElement('canvas'); c.id = 'bg'; c.setAttribute('aria-hidden', 'true'); cv.replaceWith(c); cv = c; transferred = false; }
+    eng = engineFactory(emit); eng({t:'init', canvas:cv, ...base()});
+  } catch (e){ eng = null; } // the page works fine without the background
 }
-function spawn(anywhere){
-  return {x:Math.random()*W, y:anywhere ? Math.random()*H : H + 30*DPR, s:(8 + Math.random()*16)*DPR,
-    v:(.15 + Math.random()*.5)*DPR, d:Math.random()*6.28, a:.2 + Math.random()*.45, c:Math.random() < .75 ? 0 : 1};
+function bootEngine(){
+  try {
+    if (window.Worker && window.OffscreenCanvas && 'transferControlToOffscreen' in cv){
+      const w = new Worker(URL.createObjectURL(new Blob(['const h=(' + engineFactory.toString() + ')(m=>postMessage(m));onmessage=e=>h(e.data)'], {type:'text/javascript'})));
+      const off = cv.transferControlToOffscreen(); transferred = true; worker = w;
+      w.onmessage = e => emit(e.data); w.onerror = startMain;
+      eng = m => w.postMessage(m); w.postMessage({t:'init', canvas:off, ...base()}, [off]);
+      wd = setTimeout(startMain, 2500); // no frame from the worker? fall back
+    } else startMain();
+  } catch (e){ startMain(); }
 }
-function frame(t){
-  if (!running) return;
-  const k = Math.min((t - last)/16.7 || 1, 3); last = t;
-  ctx.clearRect(0, 0, W, H);
-  for (const h of hearts){
-    h.y -= h.v*k; h.d += .01*k;
-    const d = h.s*64/24, x = h.x + Math.sin(h.d + t/1800)*18*DPR;
-    ctx.globalAlpha = h.a; ctx.drawImage(HS[h.c], x - d/2, h.y - d/2, d, d);
-    if (h.y < -40*DPR) Object.assign(h, spawn(false));
-  }
-  for (let i = parts.length - 1; i >= 0; i--){
-    const q = parts[i]; q.vy += .11*DPR*k; q.vx *= .985; q.x += q.vx*k; q.y += q.vy*k; q.l -= q.d*k;
-    if (q.l <= 0){ parts.splice(i, 1); continue; }
-    const d = q.s*3.2; ctx.globalAlpha = q.l; ctx.drawImage((q.h ? HS : DS)[q.c], q.x - d/2, q.y - d/2, d, d);
-  }
-  ctx.globalAlpha = 1;
-  for (let i = rings.length - 1; i >= 0; i--){
-    const r = rings[i]; r.r += 6*DPR*k; r.l -= .028*k;
-    if (r.l <= 0){ rings.splice(i, 1); continue; }
-    ctx.strokeStyle = `rgba(233,196,106,${r.l})`; ctx.lineWidth = 2*DPR; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, 6.3); ctx.stroke();
-  }
-  if (!reduce && !lowEnd && Math.random() < .005) stars.push({x:W*(.2 + Math.random()*.8), y:Math.random()*H*.4, vx:-(7 + Math.random()*4)*DPR, vy:(3 + Math.random()*2)*DPR, l:1});
-  for (let i = stars.length - 1; i >= 0; i--){
-    const s = stars[i]; s.x += s.vx*k; s.y += s.vy*k; s.l -= .016*k;
-    if (s.l <= 0){ stars.splice(i, 1); continue; }
-    ctx.strokeStyle = `rgba(255,242,205,${s.l})`; ctx.lineWidth = 1.6*DPR; ctx.beginPath();
-    ctx.moveTo(s.x, s.y); ctx.lineTo(s.x - s.vx*7, s.y - s.vy*7); ctx.stroke();
-  }
-  requestAnimationFrame(frame);
-}
-addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(resize, 200); });
-document.addEventListener('visibilitychange', () => { running = !document.hidden; if (running){ last = 0; requestAnimationFrame(frame); } });
-resize(); requestAnimationFrame(frame);
-
-function sparkle(px, py, n, power){
-  for (let i = 0; i < n; i++){
-    const a = Math.random()*6.28, sp = (1.2 + Math.random()*5)*power*DPR;
-    parts.push({x:px*DPR, y:py*DPR, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - 2*DPR, l:1, d:.012 + Math.random()*.014,
-      s:(3 + Math.random()*6)*DPR, c:Math.random() < .6 ? 0 : 1, h:Math.random() < .55});
-  }
-  const cap = lowEnd ? 90 : 160; if (parts.length > cap) parts.splice(0, parts.length - cap);
-}
-function burst(px, py, n = 16){ sparkle(px, py, lowEnd ? Math.round(n*.7) : n, 1); rings.push({x:px*DPR, y:py*DPR, r:0, l:1}); }
+const send = m => { try { if (eng) eng(m); } catch (e){} };
+function sparkle(x, y, n, p){ send({t:'spark', x, y, n, p}); }
+function burst(x, y, n = 16){ send({t:'burst', x, y, n}); }
+addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => send({t:'size', ...dims()}), 250); });
+document.addEventListener('visibilitychange', () => send({t:'run', v:!document.hidden}));
 
 /* ---------- typewriter ---------- */
-const line = "بعضی حرفا رو نمی‌شه تو چت گفت... بعضی رازها باید تو یه جای امن‌تر بمونن";
+const line = "شاید بعضی حرفا رو نشه تو چت گفت... بعضی رازها باید تو یه جای امن‌تر بمونن";
 const typed = document.getElementById('typed');
-const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 if (reduce) typed.textContent = line;
 else {
   let i = 0;
@@ -271,8 +330,11 @@ function stopSynth(){ if (timer){ clearInterval(timer); timer = null; if (ac) ac
 function ui(){ mbtn.classList.toggle('on', want); mbtn.textContent = want ? '🎵' : '🔇'; }
 function playMusic(){
   want = true; ui();
-  if (fileOk) song.play().catch(() => { fileOk = false; if (want) startSynth(); });
-  else startSynth();
+  try {
+    const pr = fileOk ? song.play() : null;
+    if (pr && pr.catch) pr.catch(() => { fileOk = false; try { if (want) startSynth(); } catch (e){} });
+    else if (!fileOk || !pr) startSynth();
+  } catch (e){ try { startSynth(); } catch (e2){} }
 }
 function pauseMusic(){ want = false; ui(); song.pause(); stopSynth(); }
 song.addEventListener('error', () => { fileOk = false; if (want) startSynth(); });
@@ -280,9 +342,9 @@ mbtn.addEventListener('click', () => want ? pauseMusic() : playMusic());
 
 /* ---------- scroll + reveal ---------- */
 document.getElementById('openBtn').addEventListener('click', () => {
-  if (!want) playMusic(); // browsers only allow sound after a tap
   document.body.classList.add('opened');
   document.getElementById('messages').scrollIntoView({behavior: reduce ? 'auto' : 'smooth'});
+  try { if (!want) playMusic(); } catch (e){} // browsers only allow sound after a tap
 });
 
 const io = new IntersectionObserver(es => es.forEach(e => {
@@ -353,6 +415,7 @@ addEventListener('scroll', () => {
     prog.style.transform = `scaleX(${m > 0 ? Math.min(scrollY/m, 1) : 0})`; tick2 = false;
   });
 }, {passive:true});
+setTimeout(bootEngine, 30);
 </script>
 </body>
 </html>
