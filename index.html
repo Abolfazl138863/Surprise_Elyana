@@ -21,7 +21,8 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-grad
 .aurora i:nth-child(1){top:-25%;right:-25%;background:radial-gradient(circle,rgba(230,57,70,.3),transparent 65%)}
 .aurora i:nth-child(2){bottom:-30%;left:-25%;background:radial-gradient(circle,rgba(233,196,106,.18),transparent 65%);animation-duration:32s;animation-delay:-9s}
 .aurora i:nth-child(3){display:none}
-#bg{position:fixed;top:0;left:0;width:100%;height:100vh;height:100lvh;z-index:0;pointer-events:none}
+#bg,#fx{position:fixed;top:0;left:0;width:100%;height:100vh;height:100lvh;z-index:0;pointer-events:none}
+#fx{z-index:30}
 main{position:relative;z-index:1}
 section{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:72px 20px;text-align:center}
 #messages,#final{display:none}
@@ -109,6 +110,7 @@ footer{position:relative;z-index:1;text-align:center;color:var(--muted);font-siz
 <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
 <div class="prog" id="prog" aria-hidden="true"></div>
 <canvas id="bg" aria-hidden="true"></canvas>
+<canvas id="fx" aria-hidden="true"></canvas>
 
 <main>
   <section id="hero">
@@ -136,7 +138,7 @@ footer{position:relative;z-index:1;text-align:center;color:var(--muted);font-siz
     <button class="close" id="closeBtn" aria-label="بستن">×</button>
     <span class="seal" aria-hidden="true">❤</span>
     <p class="title" id="mtext">فکر کردی قرار بود همین‌جا همه‌چیز رو لو بدم؟ </p>
-    <p class="sub">باقیش بمونه برای شاید همین امشب شاید هم بعدا...</p>
+    <p class="sub">باقیش بمونه برای موقعی که این فاصله‌ها کمتر شد...</p>
     <button class="ok" id="okBtn">باشه، منتظر می‌مونم </button>
   </div>
 </div>
@@ -164,7 +166,7 @@ function engineFactory(emit){
     g.fill(); return o;
   }
   const HS = COLORS.map(c => sprite(c, 1)), DS = COLORS.map(c => sprite(c, 0));
-  let cv, ctx, cw = 1, ch = 1, S = 1, dpr = 1, low = false, reduce = false, run = false, looping = false, alive = false;
+  let cv, ctx, fv, fctx, fdirty = false, cw = 1, ch = 1, S = 1, dpr = 1, low = false, reduce = false, run = false, looping = false, alive = false;
   let last = 0, acc = 0, fc = 0, good = 0, lvl = 0, recovered = false, noRec = false;
   const LV = [{h:1,p:1,st:1,q:1},{h:1,p:.55,st:0,q:1},{h:.55,p:.3,st:0,q:.85},{h:.3,p:.15,st:0,q:.7}];
   const MAXP = 220, px = new Float32Array(MAXP), py = new Float32Array(MAXP), pvx = new Float32Array(MAXP), pvy = new Float32Array(MAXP),
@@ -177,7 +179,7 @@ function engineFactory(emit){
   }
   function apply(){ // (re)size canvas + population for the current quality level
     const ow = cv.width || 1, oh = cv.height || 1, oS = S; S = dpr*LV[lvl].q;
-    cv.width = Math.round(cw*S); cv.height = Math.round(ch*S);
+    cv.width = fv.width = Math.round(cw*S); cv.height = fv.height = Math.round(ch*S);
     for (const h of hearts){ h.x *= cv.width/ow; h.y *= cv.height/oh; h.s *= S/oS; h.v *= S/oS; }
     const want = Math.max(4, Math.round(Math.min(low ? 16 : 26, cw/18)*LV[lvl].h));
     while (hearts.length < want) hearts.push(reset({}, true));
@@ -186,7 +188,7 @@ function engineFactory(emit){
   function spark(x, y, n, p){
     const cap = Math.max(20, Math.round(MAXP*LV[lvl].p*(low ? .6 : 1)));
     for (let i = 0; i < n; i++){
-      const j = pn < cap ? pn++ : (Math.random()*pn | 0), a = Math.random()*6.283, sp = (1.2 + Math.random()*5)*p*S;
+      fdirty = true; const j = pn < cap ? pn++ : (Math.random()*pn | 0), a = Math.random()*6.283, sp = (1.2 + Math.random()*5)*p*S;
       px[j] = x*S; py[j] = y*S; pvx[j] = Math.cos(a)*sp; pvy[j] = Math.sin(a)*sp - 2*S; pl[j] = 1;
       pd[j] = .012 + Math.random()*.014; ps[j] = (3 + Math.random()*6)*S; pk[j] = (Math.random() < .6 ? 0 : 1)*2 + (Math.random() < .55 ? 1 : 0);
     }
@@ -210,29 +212,34 @@ function engineFactory(emit){
       ctx.globalAlpha = h.a; ctx.drawImage(HS[h.c], x - d/2, h.y - d/2, d, d);
       if (h.y < -40*S) reset(h, false);
     }
-    for (let i = pn - 1; i >= 0; i--){
-      pvy[i] += .11*S*k; pvx[i] *= .985; px[i] += pvx[i]*k; py[i] += pvy[i]*k; pl[i] -= pd[i]*k;
-      if (pl[i] <= 0){ const L = --pn; if (i !== L) for (const a of A) a[i] = a[L]; continue; }
-      const d = ps[i]*3.2, kk = pk[i]; ctx.globalAlpha = pl[i]; ctx.drawImage((kk & 1 ? HS : DS)[kk >> 1], px[i] - d/2, py[i] - d/2, d, d);
-    }
     ctx.globalAlpha = 1;
-    for (let i = rings.length - 1; i >= 0; i--){
-      const r = rings[i]; r.r += 6*S*k; r.l -= .028*k;
-      if (r.l <= 0){ rings.splice(i, 1); continue; }
-      ctx.strokeStyle = `rgba(233,196,106,${r.l})`; ctx.lineWidth = 2*S; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, 6.3); ctx.stroke();
-    }
     if (!reduce && !low && LV[lvl].st && Math.random() < .005) stars.push({x:cv.width*(.2 + Math.random()*.8), y:Math.random()*cv.height*.4, vx:-(7 + Math.random()*4)*S, vy:(3 + Math.random()*2)*S, l:1});
     for (let i = stars.length - 1; i >= 0; i--){
       const s = stars[i]; s.x += s.vx*k; s.y += s.vy*k; s.l -= .016*k;
       if (s.l <= 0){ stars.splice(i, 1); continue; }
       ctx.strokeStyle = `rgba(255,242,205,${s.l})`; ctx.lineWidth = 1.6*S; ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x - s.vx*7, s.y - s.vy*7); ctx.stroke();
     }
+    if (pn || rings.length || fdirty){ // top layer is only touched while something is on it
+      fctx.clearRect(0, 0, fv.width, fv.height);
+      for (let i = pn - 1; i >= 0; i--){
+        pvy[i] += .11*S*k; pvx[i] *= .985; px[i] += pvx[i]*k; py[i] += pvy[i]*k; pl[i] -= pd[i]*k;
+        if (pl[i] <= 0){ const L = --pn; if (i !== L) for (const a of A) a[i] = a[L]; continue; }
+        const d = ps[i]*3.2, kk = pk[i]; fctx.globalAlpha = pl[i]; fctx.drawImage((kk & 1 ? HS : DS)[kk >> 1], px[i] - d/2, py[i] - d/2, d, d);
+      }
+      fctx.globalAlpha = 1;
+      for (let i = rings.length - 1; i >= 0; i--){
+        const r = rings[i]; r.r += 6*S*k; r.l -= .028*k;
+        if (r.l <= 0){ rings.splice(i, 1); continue; }
+        fctx.strokeStyle = `rgba(233,196,106,${r.l})`; fctx.lineWidth = 2*S; fctx.beginPath(); fctx.arc(r.x, r.y, r.r, 0, 6.3); fctx.stroke();
+      }
+      fdirty = pn > 0 || rings.length > 0;
+    }
     if (!alive){ alive = true; emit({t:'alive'}); }
   }
   const go = () => { if (run && !looping){ looping = true; last = 0; raf(frame); } };
   return function(m){
     switch (m.t){
-      case 'init': cv = m.canvas; ctx = cv.getContext('2d'); dpr = m.dpr; low = m.low; reduce = m.reduce; cw = m.w; ch = m.h; run = m.run; apply(); go(); break;
+      case 'init': cv = m.canvas; ctx = cv.getContext('2d'); fv = m.fx; fctx = fv.getContext('2d'); dpr = m.dpr; low = m.low; reduce = m.reduce; cw = m.w; ch = m.h; run = m.run; apply(); go(); break;
       case 'size': cw = m.w; ch = m.h; apply(); break;
       case 'spark': spark(m.x, m.y, m.n, m.p); break;
       case 'burst': spark(m.x, m.y, low ? Math.round(m.n*.7) : m.n, 1); if (LV[lvl].p > .3 && rings.length < 5) rings.push({x:m.x*S, y:m.y*S, r:0, l:1}); break;
@@ -244,7 +251,7 @@ function engineFactory(emit){
 /* ---------- main-thread glue (tiny): worker first, automatic fallback to main thread ---------- */
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const low = (navigator.hardwareConcurrency || 4) <= 4;
-let cv = document.getElementById('bg'), eng = null, worker = null, mainMode = false, transferred = false, wd, rt, hmax = 0, wlast = 0;
+let cv = document.getElementById('bg'), fx = document.getElementById('fx'), eng = null, worker = null, mainMode = false, transferred = false, wd, rt, hmax = 0, wlast = 0;
 const dims = () => { if (innerWidth !== wlast){ wlast = innerWidth; hmax = 0; } hmax = Math.max(hmax, innerHeight); return {w:innerWidth, h:hmax}; };
 const base = () => ({dpr:Math.min(devicePixelRatio || 1, low ? 1 : 1.5), low, reduce, run:!document.hidden, ...dims()});
 const emit = m => { if (m.t === 'lvl') document.body.dataset.q = m.v; else if (m.t === 'alive') clearTimeout(wd); };
@@ -252,17 +259,20 @@ function startMain(){
   if (mainMode) return; mainMode = true; clearTimeout(wd);
   try {
     if (worker){ worker.terminate(); worker = null; }
-    if (transferred){ const c = document.createElement('canvas'); c.id = 'bg'; c.setAttribute('aria-hidden', 'true'); cv.replaceWith(c); cv = c; transferred = false; }
-    eng = engineFactory(emit); eng({t:'init', canvas:cv, ...base()});
+    if (transferred){ // transferred canvases are unusable: swap in fresh ones
+      for (const id of ['bg', 'fx']){ const c = document.createElement('canvas'); c.id = id; c.setAttribute('aria-hidden', 'true'); document.getElementById(id).replaceWith(c); }
+      cv = document.getElementById('bg'); fx = document.getElementById('fx'); transferred = false;
+    }
+    eng = engineFactory(emit); eng({t:'init', canvas:cv, fx, ...base()});
   } catch (e){ eng = null; } // the page works fine without the background
 }
 function bootEngine(){
   try {
     if (window.Worker && window.OffscreenCanvas && 'transferControlToOffscreen' in cv){
       const w = new Worker(URL.createObjectURL(new Blob(['const h=(' + engineFactory.toString() + ')(m=>postMessage(m));onmessage=e=>h(e.data)'], {type:'text/javascript'})));
-      const off = cv.transferControlToOffscreen(); transferred = true; worker = w;
+      const off = cv.transferControlToOffscreen(), off2 = fx.transferControlToOffscreen(); transferred = true; worker = w;
       w.onmessage = e => emit(e.data); w.onerror = startMain;
-      eng = m => w.postMessage(m); w.postMessage({t:'init', canvas:off, ...base()}, [off]);
+      eng = m => w.postMessage(m); w.postMessage({t:'init', canvas:off, fx:off2, ...base()}, [off, off2]);
       wd = setTimeout(startMain, 2500); // no frame from the worker? fall back
     } else startMain();
   } catch (e){ startMain(); }
@@ -274,7 +284,7 @@ addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => send(
 document.addEventListener('visibilitychange', () => send({t:'run', v:!document.hidden}));
 
 /* ---------- typewriter ---------- */
-const line = "شاید بعضی حرفا رو نشه تو چت گفت... بعضی رازها باید تو یه جای امن‌تر بمونن";
+const line = "شاید نشه بعضی حرفا رو تو چت گفت... بعضی رازها باید تو یه جای امن‌تر بمونن";
 const typed = document.getElementById('typed');
 if (reduce) typed.textContent = line;
 else {
@@ -391,7 +401,7 @@ secretBtn.addEventListener('click', e => {
   secretBtn.textContent = 'رازِ آخر 🔓'; secretBtn.classList.add('unlock');
   setTimeout(() => {
     secretBtn.classList.remove('unlock'); openM(pt);
-    for (let i = 0; i < 2; i++) setTimeout(() => burst(innerWidth*(.2 + Math.random()*.6), innerHeight*(.5 + Math.random()*.3), 12), i*200);
+    for (let i = 0; i < 4; i++) setTimeout(() => burst(innerWidth*(.15 + Math.random()*.7), innerHeight*(.3 + Math.random()*.5), 18), i*220);
   }, reduce ? 0 : 450);
 });
 document.getElementById('closeBtn').addEventListener('click', closeM);
@@ -401,11 +411,10 @@ addEventListener('keydown', e => { if (e.key === 'Escape') closeM(); });
 
 /* ---------- mouse-only trail + throttled scroll bar ---------- */
 let lastTrail = 0;
-addEventListener('pointermove', e => {
-  if (reduce || e.pointerType !== 'mouse') return;
-  const t = performance.now();
-  if (t - lastTrail > 60){ lastTrail = t; sparkle(e.clientX, e.clientY, 2, .35); }
-}, {passive:true});
+const trail = (x, y, n, pw) => { const t = performance.now(); if (t - lastTrail > 45){ lastTrail = t; sparkle(x, y, n, pw); } };
+addEventListener('pointermove', e => { if (!reduce && e.pointerType === 'mouse') trail(e.clientX, e.clientY, 2, .4); }, {passive:true});
+addEventListener('touchmove', e => { const q = e.touches[0]; if (!reduce && q) trail(q.clientX, q.clientY, 3, .6); }, {passive:true});
+addEventListener('pointerdown', e => { if (!reduce && !(e.target.closest && e.target.closest('.card'))) burst(e.clientX, e.clientY, 10); }, {passive:true});
 const prog = document.getElementById('prog');
 let tick2 = false;
 addEventListener('scroll', () => {
